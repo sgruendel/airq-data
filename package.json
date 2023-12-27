@@ -1,0 +1,63 @@
+{
+    "name": "airq-data",
+    "version": "1.0.0",
+    "description": "Export air-Q measured data to mongodb.",
+    "main": "read.js",
+    "scripts": {
+        "reinstall": "rm -rf ./node_modules && npm install",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sgruendel/airq-data.git"
+    },
+    "keywords": [
+        "airq",
+        "mongodb",
+        "node"
+    ],
+    "author": "Stefan Gründel",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/sgruendel/airq-data/issues"
+    },
+    "homepage": "https://github.com/sgruendel/airq-data#readme",
+    "dependencies": {
+        "crypto-js": "^4.2.0",
+        "mongoose": "^8.0.3",
+        "node-fetch": "^2.7.0",
+        "winston": "^3.11.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.56.0",
+        "eslint-config-strongloop": "^2.1.0"
+    },
+    "eslintConfig": {
+        "parserOptions": {
+            "ecmaVersion": 2020
+        },
+        "extends": "strongloop",
+        "env": {
+            "es6": true,
+            "node": true,
+            "mocha": true
+        },
+        "rules": {
+            "indent": [
+                "error",
+                4
+            ],
+            "max-len": [
+                "error",
+                120,
+                4,
+                {
+                    "ignoreComments": true,
+                    "ignoreUrls": true,
+                    "ignoreStrings": true,
+                    "ignorePattern": "^\\s*var\\s.+=\\s*(require\\s*\\()|(/)"
+                }
+            ]
+        }
+    }
+}
