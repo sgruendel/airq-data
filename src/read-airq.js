@@ -1,20 +1,15 @@
-'use strict';
-
-const CryptoJS = require('crypto-js');
-const fetch = require('node-fetch');
-const winston = require('winston');
+import cryptoJs from 'crypto-js';
+import fetch from 'node-fetch';
+import winston from 'winston';
 
 const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
-    transports: [
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        }),
-    ],
+    format: winston.format.combine(winston.format.timestamp(), winston.format.simple()),
+    transports: [new winston.transports.Console()],
     exitOnError: false,
 });
 
-const db = require('./db');
+import * as db from './db.js';
 
 const BASE_URL = 'http://' + process.env.AIRQ + '/';
 
@@ -27,17 +22,17 @@ function decryptData(msgb64, airqpass) {
     } else if (airqpass.length > 32) {
         airqpass = airqpass.substring(0, 32);
     }
-    const key = CryptoJS.enc.Utf8.parse(airqpass);
-    const ciphertext = CryptoJS.enc.Base64.parse(msgb64);
+    const key = cryptoJs.enc.Utf8.parse(airqpass);
+    const ciphertext = cryptoJs.enc.Base64.parse(msgb64);
     const iv = ciphertext.clone();
     iv.sigBytes = 16;
     iv.clamp();
     ciphertext.words.splice(0, 4); // delete 4 words = 16 bytes
     ciphertext.sigBytes -= 16;
-    const decrypted = CryptoJS.AES.decrypt({ ciphertext: ciphertext }, key, {
+    const decrypted = cryptoJs.AES.decrypt({ ciphertext: ciphertext }, key, {
         iv: iv,
     });
-    return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    return JSON.parse(decrypted.toString(cryptoJs.enc.Utf8));
 }
 
 /**
@@ -77,15 +72,27 @@ async function readData() {
     const response = await fetch(BASE_URL + 'data', {
         compress: true,
     });
-    const data = await response.json();
-    logger.debug('data: ', data);
 
-    const normalizedData = normalizeData(decryptData(data.content, process.env.AIRQ_PASS));
-    logger.debug('content: ', normalizedData);
-    await db.Data.create(normalizedData);
+    let exitStatus = 1; // error
+    if (response.status !== 200) {
+        logger.error(`error getting data: ${response.status} ${response.statusText}`);
+    } else {
+        try {
+            const data = await response.json();
+            logger.debug('data: ', data);
+
+            const normalizedData = normalizeData(decryptData(data.content, process.env.AIRQ_PASS));
+            logger.debug('content: ', normalizedData);
+            await db.Data.create(normalizedData);
+            exitStatus = 0; // success
+        } catch (e) {
+            logger.error('error parsing response:', e);
+        }
+    }
 
     logger.info('done, waiting to finish ...');
     db.disconnect();
+    process.exit(exitStatus);
 }
 
 readData();

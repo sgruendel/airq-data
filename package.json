@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Export air-Q measured data to mongodb.",
     "main": "read.js",
+    "type": "module",
     "scripts": {
         "reinstall": "rm -rf ./node_modules && npm install",
         "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,16 +26,18 @@
     "dependencies": {
         "crypto-js": "^4.2.0",
         "mongoose": "^8.4.1",
-        "node-fetch": "^2.7.0",
+        "node-fetch": "^3.3.2",
         "winston": "^3.13.0"
     },
     "devDependencies": {
-        "eslint": "^9.4.0",
+        "@types/node": "^20.14.2",
+        "eslint": "^9.5.0",
         "eslint-config-strongloop": "^2.1.0"
     },
     "eslintConfig": {
         "parserOptions": {
-            "ecmaVersion": 2020
+            "ecmaVersion": 2023,
+            "sourceType": "module"
         },
         "extends": "strongloop",
         "env": {

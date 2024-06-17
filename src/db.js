@@ -1,11 +1,8 @@
-'use strict';
+import * as mongoose from 'mongoose';
 
-const mongoose = require('mongoose');
 mongoose.connect('mongodb://127.0.0.1:27017/airq-data');
 
-var exports = (module.exports = {});
-
-exports.disconnect = mongoose.disconnect;
+export { disconnect } from 'mongoose';
 
 const data = new mongoose.Schema(
     {
@@ -30,4 +27,4 @@ const data = new mongoose.Schema(
 );
 data.index({ status: 1 });
 data.index({ dateutc: -1 });
-exports.Data = mongoose.model('Data', data);
+export const Data = mongoose.model('Data', data);
