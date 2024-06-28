@@ -25,12 +25,12 @@
     "homepage": "https://github.com/sgruendel/airq-data#readme",
     "dependencies": {
         "crypto-js": "^4.2.0",
-        "mongoose": "^8.4.3",
+        "mongoose": "^8.4.4",
         "node-fetch": "^3.3.2",
         "winston": "^3.13.0"
     },
     "devDependencies": {
-        "@types/node": "^20.14.2",
+        "@types/node": "^20.14.9",
         "eslint": "^9.5.0",
         "eslint-config-strongloop": "^2.1.0"
     },
