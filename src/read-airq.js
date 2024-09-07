@@ -39,6 +39,7 @@ function decryptData(msgb64, airqpass) {
  * Normalizes air-Q data for storing in MongoDB, normalizing includes
  * * values wich are an array with two elements are converted to a single value and an additional error bar value
  * * DeviceID, Status and TypPS are snake cased
+ * * status is converted to String if it not already is a String
  * * timestamp is converted to corresponding Date object
  *
  * @param data - Measured data from airQ according to https://docs.air-q.com/html/en/datenlesen.html
@@ -63,6 +64,10 @@ function normalizeData(data) {
         } else {
             normalized[key] = data[key];
         }
+    }
+
+    if (typeof normalized['status'] != 'string') {
+        normalized['status'] = JSON.stringify(normalized['status']);
     }
     return normalized;
 }
