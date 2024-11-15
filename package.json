@@ -25,9 +25,9 @@
     "homepage": "https://github.com/sgruendel/airq-data#readme",
     "dependencies": {
         "crypto-js": "^4.2.0",
-        "mongoose": "^8.8.0",
+        "mongoose": "^8.8.1",
         "node-fetch": "^3.3.2",
-        "winston": "^3.16.0"
+        "winston": "^3.17.0"
     },
     "devDependencies": {
         "@types/node": "^22.9.0",
