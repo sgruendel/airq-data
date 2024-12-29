@@ -83,6 +83,8 @@ async function readData() {
         logger.error(`error getting data: ${response.status} ${response.statusText}`);
     } else {
         try {
+            /** @type {{content: string}} */
+            // @ts-ignore
             const data = await response.json();
             logger.debug('data: ', data);
 
