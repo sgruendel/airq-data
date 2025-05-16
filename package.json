@@ -25,14 +25,14 @@
     },
     "dependencies": {
         "crypto-js": "^4.2.0",
-        "mongoose": "^8.14.1",
+        "mongoose": "^8.14.3",
         "node-fetch": "^3.3.2",
         "winston": "^3.17.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.26.0",
-        "@types/node": "^22.15.3",
-        "eslint": "^9.25.1",
+        "@types/node": "^22.15.18",
+        "eslint": "^9.26.0",
         "globals": "^16.1.0"
     }
 }
