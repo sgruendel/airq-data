@@ -29,7 +29,7 @@ function decryptData(msgb64, airqpass) {
     iv.clamp();
     ciphertext.words.splice(0, 4); // delete 4 words = 16 bytes
     ciphertext.sigBytes -= 16;
-    const decrypted = cryptoJs.AES.decrypt({ ciphertext: ciphertext }, key, {
+    const decrypted = cryptoJs.AES.decrypt(cryptoJs.enc.Base64.stringify(ciphertext), key, {
         iv: iv,
     });
     return JSON.parse(decrypted.toString(cryptoJs.enc.Utf8));
@@ -88,12 +88,17 @@ async function readData() {
             const data = await response.json();
             logger.debug('data: ', data);
 
-            const normalizedData = normalizeData(decryptData(data.content, process.env.AIRQ_PASS));
-            logger.debug('content: ', normalizedData);
-            await db.Data.create(normalizedData);
-            exitStatus = 0; // success
+            try {
+                const normalizedData = normalizeData(decryptData(data.content, process.env.AIRQ_PASS));
+                logger.debug('content: ', normalizedData);
+                await db.Data.create(normalizedData);
+                exitStatus = 0; // success
+            } catch (e) {
+                logger.error('error parsing response:', e);
+                logger.info('response content:', data.content);
+            }
         } catch (e) {
-            logger.error('error parsing response:', e);
+            logger.error('error reading data:', e);
         }
     }
 
