@@ -129,6 +129,16 @@ function normalizeData(data) {
 }
 
 /**
+ * Returns true when the normalized device response is missing all required fields.
+ *
+ * @param {NormalizedDataDraft} data
+ * @returns {boolean}
+ */
+function isMissingRequiredDeviceData(data) {
+    return data.device_id == null && data.status == null && data.dateutc == null;
+}
+
+/**
  * Reads the raw encrypted response from the real air-Q device.
  * @returns {Promise<AirQDataResponse>}
  */
@@ -146,7 +156,6 @@ async function readRawDeviceData() {
 
     return /** @type {AirQDataResponse} */ (await response.json());
 }
-
 /**
  * Decrypts and normalizes a raw air-Q device response.
  *
@@ -173,5 +182,15 @@ export function normalizeDeviceDataResponse(data, airqPass = getAirqPass()) {
  * @returns {Promise<NormalizedData>}
  */
 export async function readDeviceData() {
-    return normalizeDeviceDataResponse(await readRawDeviceData());
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        const normalizedData = normalizeDeviceDataResponse(await readRawDeviceData());
+
+        if (!isMissingRequiredDeviceData(normalizedData)) {
+            return normalizedData;
+        }
+
+        logger.warn(`device response missing required fields on attempt ${attempt} of 3`);
+    }
+
+    throw new Error('device response missing required fields after 3 attempts');
 }
