@@ -9,11 +9,40 @@ const logger = winston.createLogger({
     exitOnError: false,
 });
 
-import * as db from './db.js';
+/**
+ * Gets the base URL for the air-Q device from the AIRQ environment variable.
+ *
+ * @returns {string} The base URL for the air-Q device
+ */
+function getBaseUrl() {
+    if (!process.env.AIRQ) {
+        throw new Error('AIRQ is not set');
+    }
 
-const BASE_URL = 'http://' + process.env.AIRQ + '/';
+    return 'http://' + process.env.AIRQ + '/';
+}
 
-// see https://docs.air-q.com/html/en/entschl%C3%BCsseln.html
+/**
+ * Gets the air-Q device password from the AIRQ_PASS environment variable.
+ *
+ * @returns {string} The password used to decrypt the device response
+ */
+function getAirqPass() {
+    if (!process.env.AIRQ_PASS) {
+        throw new Error('AIRQ_PASS is not set');
+    }
+
+    return process.env.AIRQ_PASS;
+}
+
+/**
+ * Decrypts the content of the air-Q device response using the provided password,
+ * see https://docs.air-q.com/html/en/entschl%C3%BCsseln.html
+ *
+ * @param {string} msgb64
+ * @param {string} airqpass
+ * @returns {Record<string, unknown>}
+ */
 function decryptData(msgb64, airqpass) {
     if (airqpass.length < 32) {
         for (let i = airqpass.length; i < 32; i++) {
@@ -36,16 +65,43 @@ function decryptData(msgb64, airqpass) {
 }
 
 /**
+ * @typedef {{
+ *   content: string,
+ * }} AirQDataResponse
+ */
+
+/**
+ * @typedef {{
+ *   [key: string]: unknown,
+ *   device_id: string,
+ *   status: string,
+ *   dateutc: Date,
+ *   typ_ps?: unknown,
+ * }} NormalizedData
+ */
+
+/**
+ * @typedef {{
+ *   [key: string]: unknown,
+ *   device_id?: unknown,
+ *   status?: unknown,
+ *   dateutc?: Date,
+ *   typ_ps?: unknown,
+ * }} NormalizedDataDraft
+ */
+
+/**
  * Normalizes air-Q data for storing in MongoDB, normalizing includes
  * * values wich are an array with two elements are converted to a single value and an additional error bar value
  * * DeviceID, Status and TypPS are snake cased
  * * status is converted to String if it not already is a String
  * * timestamp is converted to corresponding Date object
  *
- * @param data - Measured data from airQ according to https://docs.air-q.com/html/en/datenlesen.html
- * @returns the normalized data object
+ * @param {Record<string, unknown>} data Measured data from airQ according to https://docs.air-q.com/html/en/datenlesen.html
+ * @returns {NormalizedData} the normalized data object
  */
 function normalizeData(data) {
+    /** @type {NormalizedDataDraft} */
     const normalized = {};
 
     for (const key in data) {
@@ -58,7 +114,7 @@ function normalizeData(data) {
         } else if (key === 'Status') {
             normalized['status'] = data[key];
         } else if (key === 'timestamp') {
-            normalized['dateutc'] = new Date(data[key]);
+            normalized['dateutc'] = new Date(/** @type {string | number | Date} */ (data[key]));
         } else if (key === 'TypPS') {
             normalized['typ_ps'] = data[key];
         } else {
@@ -69,42 +125,53 @@ function normalizeData(data) {
     if (typeof normalized['status'] != 'string') {
         normalized['status'] = JSON.stringify(normalized['status']);
     }
-    return normalized;
+    return /** @type {NormalizedData} */ (normalized);
 }
 
-async function readData() {
-    logger.info('calling ' + BASE_URL + 'data');
-    const response = await fetch(BASE_URL + 'data', {
+/**
+ * Reads the raw encrypted response from the real air-Q device.
+ * @returns {Promise<AirQDataResponse>}
+ */
+async function readRawDeviceData() {
+    const resolvedBaseUrl = getBaseUrl();
+
+    logger.info('calling ' + resolvedBaseUrl + 'data');
+    const response = await fetch(resolvedBaseUrl + 'data', {
         compress: true,
     });
 
-    let exitStatus = 1; // error
     if (response.status !== 200) {
-        logger.error(`error getting data: ${response.status} ${response.statusText}`);
-    } else {
-        try {
-            /** @type {{content: string}} */
-            // @ts-ignore
-            const data = await response.json();
-            logger.debug('data: ', data);
-
-            try {
-                const normalizedData = normalizeData(decryptData(data.content, process.env.AIRQ_PASS));
-                logger.debug('content: ', normalizedData);
-                await db.Data.create(normalizedData);
-                exitStatus = 0; // success
-            } catch (e) {
-                logger.error('error parsing response:', e);
-                logger.info('response content:', data.content);
-            }
-        } catch (e) {
-            logger.error('error reading data:', e);
-        }
+        throw new Error(`error getting data: ${response.status} ${response.statusText}`);
     }
 
-    logger.info('done, waiting to finish ...');
-    db.disconnect();
-    process.exit(exitStatus);
+    return /** @type {AirQDataResponse} */ (await response.json());
 }
 
-readData();
+/**
+ * Decrypts and normalizes a raw air-Q device response.
+ *
+ * @param {AirQDataResponse} data
+ * @param {string} [airqPass]
+ * @returns {NormalizedData}
+ */
+export function normalizeDeviceDataResponse(data, airqPass = getAirqPass()) {
+    logger.debug('data: ', data);
+
+    try {
+        const normalizedData = normalizeData(decryptData(data.content, airqPass));
+        logger.debug('content: ', normalizedData);
+        return normalizedData;
+    } catch (e) {
+        logger.info('response content:', data.content);
+        throw e;
+    }
+}
+
+/**
+ * Reads data from the real air-Q device, decrypts it and normalizes it for storing in MongoDB.
+ *
+ * @returns {Promise<NormalizedData>}
+ */
+export async function readDeviceData() {
+    return normalizeDeviceDataResponse(await readRawDeviceData());
+}
