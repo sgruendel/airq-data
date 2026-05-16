@@ -184,6 +184,7 @@ export function normalizeDeviceDataResponse(data, airqPass = getAirqPass()) {
  */
 export async function readDeviceData() {
     const maxReadAttempts = 4;
+    let retryDelayMs = 1000;
 
     for (let attempt = 1; attempt <= maxReadAttempts; attempt++) {
         const normalizedData = normalizeDeviceDataResponse(await readRawDeviceData());
@@ -195,7 +196,8 @@ export async function readDeviceData() {
         logger.warn(`device response missing required fields on attempt ${attempt} of ${maxReadAttempts}`);
 
         if (attempt < maxReadAttempts) {
-            await delay(1000);
+            await delay(retryDelayMs);
+            retryDelayMs *= 2;
         }
     }
 
