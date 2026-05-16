@@ -1,5 +1,6 @@
 import cryptoJs from 'crypto-js';
 import fetch from 'node-fetch';
+import { setTimeout as delay } from 'node:timers/promises';
 import winston from 'winston';
 
 const logger = winston.createLogger({
@@ -182,15 +183,21 @@ export function normalizeDeviceDataResponse(data, airqPass = getAirqPass()) {
  * @returns {Promise<NormalizedData>}
  */
 export async function readDeviceData() {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    const maxReadAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxReadAttempts; attempt++) {
         const normalizedData = normalizeDeviceDataResponse(await readRawDeviceData());
 
         if (!isMissingRequiredDeviceData(normalizedData)) {
             return normalizedData;
         }
 
-        logger.warn(`device response missing required fields on attempt ${attempt} of 3`);
+        logger.warn(`device response missing required fields on attempt ${attempt} of ${maxReadAttempts}`);
+
+        if (attempt < maxReadAttempts) {
+            await delay(1000);
+        }
     }
 
-    throw new Error('device response missing required fields after 3 attempts');
+    throw new Error(`device response missing required fields after ${maxReadAttempts} attempts`);
 }
