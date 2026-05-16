@@ -183,7 +183,7 @@ export function normalizeDeviceDataResponse(data, airqPass = getAirqPass()) {
  * @returns {Promise<NormalizedData>}
  */
 export async function readDeviceData() {
-    const maxReadAttempts = 3;
+    const maxReadAttempts = 4;
 
     for (let attempt = 1; attempt <= maxReadAttempts; attempt++) {
         const normalizedData = normalizeDeviceDataResponse(await readRawDeviceData());
