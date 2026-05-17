@@ -193,7 +193,7 @@ export async function readDeviceData() {
             return normalizedData;
         }
 
-        logger.warn(`device response missing required fields on attempt ${attempt} of ${maxReadAttempts}`);
+        logger.info(`device response missing required fields on attempt ${attempt} of ${maxReadAttempts}`);
 
         if (attempt < maxReadAttempts) {
             await delay(retryDelayMs);
