@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "crypto-js": "^4.2.0",
-        "mongoose": "^9.7.4",
+        "mongoose": "^9.8.0",
         "node-fetch": "^3.3.2",
         "winston": "^3.19.0"
     },
