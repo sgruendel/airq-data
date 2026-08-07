@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "crypto-js": "^4.2.0",
-        "mongoose": "^9.8.1",
+        "mongoose": "^9.9.1",
         "node-fetch": "^3.3.2",
         "winston": "^3.19.0"
     },
@@ -37,6 +37,6 @@
         "@types/node": "^24.13.3",
         "dotenv": "^17.4.2",
         "eslint": "^10.8.0",
-        "globals": "^17.8.0"
+        "globals": "^17.9.0"
     }
 }
